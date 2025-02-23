@@ -145,4 +145,29 @@ router.put('/', verifyToken, async (req: Request, res: Response): Promise<void> 
     }
 });
 
+router.get('/bulk', async (req: Request, res: Response): Promise<void> => {
+    try {
+        const filter = (req.query.filter as string) || "";
+
+        const users = await User.find({
+            $or: [
+                { firstName: { "$regex": filter, "$options": "i" } },
+                { lastName: { "$regex": filter, "$options": "i" } }
+            ]
+        });
+
+        res.json({
+            users: users.map(user => ({
+                username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                _id: user._id
+            }))
+        });
+    } catch (error) {
+        console.error("Bulk error:", error);
+        res.status(500).json({ message: "Error while fetching users" });
+    }
+});
+
 export default router;
