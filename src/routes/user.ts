@@ -3,6 +3,7 @@ import User from "../db";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { z } from "zod";
+import verifyToken from "../middleware";
 
 const router = express.Router();
 
@@ -104,6 +105,43 @@ router.post('/signin', async (req: Request, res: Response): Promise<void> => {
     } catch (error) {
         console.error("Signin error:", error);
         res.status(500).json({ message: "Error while signing in" });
+    }
+});
+
+const updateBody = z.object({
+    firstName: z.string().min(2).max(20).optional(),
+    lastName: z.string().min(2).max(20).optional(),
+    password: z.string().min(6).max(20).optional()
+});
+
+router.put('/', verifyToken, async (req: Request, res: Response): Promise<void> => {
+    try {
+        // Validate request body
+        const parsedBody = updateBody.safeParse(req.body);
+        if (!parsedBody.success) {
+            res.status(400).json({ message: "Incorrect inputs" });
+            return;
+        }
+
+        const { firstName, lastName, password } = parsedBody.data;
+
+        let newPassword;
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 5);
+            newPassword = hashedPassword;
+        }
+
+        await User.updateOne({ _id: (req as any).userId }, {
+            firstName,
+            lastName,
+            password: newPassword
+        });
+
+        res.status(200).json({ message: "Updated successfully" });
+    } catch (error) {
+        console.error("Update error:", error);
+        res.status(500).json({ message: "Error while updating information" });
+
     }
 });
 
