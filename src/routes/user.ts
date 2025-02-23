@@ -49,16 +49,8 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
             balance: 1 + Math.random() * 10000
         })
 
-        // Generate JWT token
-        const token = jwt.sign(
-            { userId: user._id },
-            process.env.JWT_SECRET as string,
-            { expiresIn: "1h" }
-        );
-
         res.status(201).json({
             message: "User created successfully",
-            token
         });
     } catch (error) {
         console.error("Signup error:", error);
