@@ -13,7 +13,7 @@ interface CustomRequest extends Request {
 export default function verifyToken(req: CustomRequest, res: Response, next: NextFunction): void {
     const authHeader = req.headers["authorization"] as string;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        res.status(403).json({ message: "Unauthorized 1" });
+        res.status(403).json({ message: "Unauthorized" });
         return;
     }
 
@@ -26,7 +26,7 @@ export default function verifyToken(req: CustomRequest, res: Response, next: Nex
 
     jwt.verify(token, JWT_SECRET as string, (err, decoded: any) => {
         if (err) {
-            return res.status(401).json({ message: "Unauthorized 2" });
+            return res.status(401).json({ message: "Unauthorized" });
         }
         req.userId = decoded.userId;
         next();
