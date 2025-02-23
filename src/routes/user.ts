@@ -60,4 +60,51 @@ router.post('/signup', async (req: Request, res: Response): Promise<void> => {
     }
 });
 
+const signinBody = z.object({
+    username: z.string().email(),
+    password: z.string().min(6).max(20)
+});
+
+router.post('/signin', async (req: Request, res: Response): Promise<void> => {
+    try {
+        // Validate request body
+        const parsedBody = signinBody.safeParse(req.body);
+        if (!parsedBody.success) {
+            res.status(400).json({ message: "Incorrect inputs" });
+            return;
+        }
+
+        const { username, password } = parsedBody.data;
+
+        // Check if user exists
+        const user = await User.findOne({ username });
+        if (!user) {
+            res.status(401).json({ message: "Email not found" });
+            return;
+        }
+
+        // Compare password with hashed password
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            res.status(401).json({ message: "Incorrect password" });
+            return;
+        }
+
+        // Generate JWT token
+        const token = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET as string,
+            { expiresIn: "1h" }
+        );
+
+        res.status(200).json({
+            message: "Signin successful",
+            token
+        });
+    } catch (error) {
+        console.error("Signin error:", error);
+        res.status(500).json({ message: "Error while signing in" });
+    }
+});
+
 export default router;
